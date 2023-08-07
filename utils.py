@@ -1,5 +1,6 @@
 import SimpleITK as sitk
 import numpy as np
+import math
 
 
 class Evaluate2DTranslationCorrelation:
@@ -330,3 +331,13 @@ def final_registration(fixed_image, moving_image, initial_mutable_transformation
 
 	final_values = [reg(transform) for transform in initial_mutable_transformations]
 	return list(zip(initial_mutable_transformations, final_values))
+
+
+def calculate_angle(p1, p2, p3):
+	"""
+	Calculate angle between three points
+	"""
+	angle = math.degrees(
+		math.atan2(p3[1] - p2[1], p3[0] - p2[0]) -
+		math.atan2(p1[1] - p2[1], p1[0] - p2[0]))
+	return angle + 360 if angle < 0 else angle

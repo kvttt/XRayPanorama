@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import SimpleITK as sitk
 
 from utils import Evaluate2DTranslationCorrelation, create_images_in_shared_coordinate_system, \
-	composite_images_alpha_blending, final_registration
+	composite_images_alpha_blending, final_registration, \
+	calculate_angle
 
 import argparse
 import os
@@ -90,7 +91,6 @@ if DO_CROP.lower() == 'y':
 		      'Press Enter to confirm...')
 
 		while True:
-			# cv2.resizeWindow('DSA', img.shape[0], img.shape[1])
 			temp = np.copy(normed_img)
 			cv2.resizeWindow('HKA', 800, 800)
 			cv2.imshow('HKA', temp)
@@ -99,11 +99,11 @@ if DO_CROP.lower() == 'y':
 		cv2.destroyAllWindows()
 
 		# Crop original image
-		print(f'Cropping image {i+1}...')
+		print(f'Cropping image {i + 1}...')
 		cropped_img = img[top_y:bottom_y, :]
 		# cropped_img_sitk = sitk.GetImageFromArray(cropped_img)
 		pixel_arrays[i] = cropped_img
-		print(f'Done. Cropped image {i+1} shape: {cropped_img.shape}.')
+		print(f'Done. Cropped image {i + 1} shape: {cropped_img.shape}.')
 
 		# Create a new DICOM image
 		print(f'Saving as new DICOM image...')
@@ -288,3 +288,48 @@ ds_dst.PixelData = composite_array.tobytes()
 ds_dst.save_as(os.path.join(args.output, 'composite.dcm'))
 
 print('Done. Saved composite image as composite.dcm.')
+
+CALC_ANGLE = input('Do you wish to calculate the hip-knee-ankle (HKA) angle? (y/N) ')
+if CALC_ANGLE.lower() == 'y':
+
+	"""
+	Step 5
+	Angle calculation
+	"""
+
+	cv2.destroyAllWindows()
+
+	composite_array = (composite_array - composite_array.min()) / (composite_array.max() - composite_array.min())
+
+	# Select three points
+	points = []
+
+	def select_point(event, x, y, flags, param):
+		global points
+		if event == cv2.EVENT_LBUTTONUP:
+			if len(points) <= 2:
+				points.append((x, y))
+				print(f'Point {len(points)} selected at ({x}, {y}).')
+				cv2.circle(composite_array, (x, y), 30, (0, 0, 255), -1)
+				cv2.imshow('Composite', composite_array)
+				if len(points) == 3:
+					cv2.line(composite_array, points[0], points[1], (0, 255, 0), 20, cv2.LINE_AA)
+					cv2.line(composite_array, points[1], points[2], (0, 255, 0), 20, cv2.LINE_AA)
+					cv2.imshow('Composite', composite_array)
+					print('HKA angle specified. Calculating the HKA angle...')
+					angle = calculate_angle(*points)
+					print(f'The HKA angle is: {180 - angle}. Press Enter to exit.')
+					if cv2.waitKey(20) == ord('\r'):
+						cv2.destroyAllWindows()
+
+	# initialize window
+	cv2.namedWindow('Composite', cv2.WINDOW_NORMAL)
+	cv2.imshow('Composite', composite_array)
+	cv2.resizeWindow('Composite',
+	                 int(composite_array.shape[1] / 10),
+	                 int(composite_array.shape[0] / 10),
+	                 )
+	cv2.setMouseCallback('Composite', select_point)
+	print('Please click three times to specify three points. Press Enter to confirm...')
+	cv2.waitKey()
+	cv2.destroyAllWindows()

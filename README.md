@@ -10,6 +10,12 @@ Compared to the tutorial version, this adaptation has some additional functional
 * Users have the option to interactively crop the images to remove artifact on the top and bottom edges of the images.
 * The program can automatically match the appearances of the three images to account for intensity differences
 due to different exposure settings when the images were taken.
+* To calculate the HKA angle directly in the program,
+users will be prompted to specify three points on the composite image.
+The HKA angle will then be calculated and displayed for the user.
+* A separate program is provided to directly calculate the HKA angle
+when a composite image is already present.
+
 
 Dependencies
 ------------
@@ -43,11 +49,21 @@ and saved under the directory specified by `--output` or `-o`.
 The resulting composite image is displayed for visual inspection.
 4. After closing the window from step 3, 
 the user is asked whether they wish to match the appearances of the three images (default is No). 
-If yes, the three images are post-processed using the statistics
+If Yes, the three images are post-processed using the statistics
 calculated from the overlapping regions of the three images. 
 The final composite image is displayed for visual inspection and saved as DICOM file `composite.dcm`
 under the directory specified by `--output` or `-o`.
+5. The user will then be asked whether they wish to calculate the HKA angle.
+If Yes, the user will be further asked to specify three points using their left button.
+The HKA angle will be displayed after all three points are specified.
+To exit the program, press Enter.
 
+When a composite image is already present, 
+the user can optionally use the program `HKA_angle_calc.py` instead:
+
+    python HKA_angle_calc.py ./output/composite.dcm
+
+where `./output/composite.dcm` is the path to the composite image.
 
 
 
